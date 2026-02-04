@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <title>上传数据</title>
+    <link rel="stylesheet" href="/static/styles.css">
+  </head>
+  <body>
+    <div class="container">
+      <div class="card" style="max-width:640px;margin:0 auto">
+        <h3>上传 CSV 文件（将替换当前数据文件）</h3>
+        <form action="/upload" method="post" enctype="multipart/form-data">
+          <div class="form-row"><input type="file" name="file" accept=".csv"></div>
+          <div class="form-row"><input type="submit" value="上传并替换"></div>
+        </form>
+        <p class="note"><a href="/">返回首页</a></p>
+      </div>
+    </div>
+  </body>
+</html>

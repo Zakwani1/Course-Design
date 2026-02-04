@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <title>招生数据可视化</title>
+    <link rel="stylesheet" href="/static/styles.css">
+  </head>
+  <!doctype html>
+  <html lang="zh-CN">
+    <head>
+      <meta charset="utf-8">
+      <title>招生数据可视化</title>
+      <style>
+        body{font-family: Arial, Helvetica, sans-serif; margin:20px}
+        .col{display:inline-block; vertical-align:top; margin-right:20px}
+        img{max-width:320px; margin:8px}
+        textarea{width:320px;height:80px}
+        .flash{color:green}
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <h2>招生数据可视化界面</h2>
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <div class="flash">
+              {% for m in messages %} <div>{{ m }}</div> {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <div class="layout">
+          <div class="card sidebar">
+        <h3>爬取 / 清洗 数据</h3>
+        <div class="form-row button-row">
+          <form action="/crawl_run" method="post">
+            <input class="primary-btn" type="submit" value="执行爬取（Data_request.py）">
+          </form>
+          <form action="/clean_run" method="post">
+            <input class="primary-btn small-btn" type="submit" value="执行清洗（Clean_Data.py）">
+          </form>
+        </div>
+        <p class="note">说明：爬取会生成 <code>招生数据.csv</code>，清洗会生成 <code>招生数据_clean.csv</code>（分析默认使用清洗文件）。</p>
+
+        <hr>
+        <h3>上传 / 替换 数据</h3>
+        <form action="/upload" method="post" enctype="multipart/form-data">
+          <div class="form-row"><input type="file" name="file" accept=".csv"></div>
+          <div class="form-row"><input type="submit" value="上传并替换"></div>
+        </form>
+
+        <hr>
+        <h3>运行全部分析</h3>
+        <form action="/run_all" method="post">
+          <div class="form-row"><input type="submit" value="生成所有默认图表"></div>
+        </form>
+
+        <hr>
+        <h3>学校 - 专业 年度趋势（分数 & 位次）</h3>
+        <form action="/plot_school_major" method="post">
+          <div class="form-row">学校：<input name="school" value="四川大学"></div>
+          <div class="form-row">专业：<input name="major" value="临床医学"></div>
+          <div class="form-row">开始年：<input name="year_min" value="2020" size="6"> 结束年：<input name="year_max" value="2024" size="6"></div>
+          <div class="form-row"><input type="submit" value="生成图表"></div>
+        </form>
+
+        <hr>
+        <h3>同一学校多专业趋势（按行输入专业或留空自动选择Top）</h3>
+        <form action="/plot_school_majors" method="post">
+          <div class="form-row">学校：<input name="school2" value="四川大学"></div>
+          <div class="form-row">专业（每行一个，可留空）：<br><textarea name="majors" placeholder="例如：\n临床医学\n口腔医学"></textarea></div>
+          <div class="form-row">指标：<input name="metric" value="平均分" size="8"></div>
+          <div class="form-row">开始年：<input name="year_min2" value="2020" size="6"> 结束年：<input name="year_max2" value="2024" size="6"></div>
+          <div class="form-row"><input type="submit" value="生成图表"></div>
+        </form>
+          </div>
+
+          <div class="card main">
+        <h3>生成的图片（点击查看大图）</h3>
+        <div class="img-grid">
+        {% if images %}
+          {% for img in images %}
+            <a href="/figures/{{ img }}" target="_blank"><img src="/figures/{{ img }}" alt="{{ img }}"></a>
+          {% endfor %}
+        {% else %}
+          <div class="note">尚无图片，请先运行分析或生成图表。</div>
+        {% endif %}
+        </div>
+
+        <h3 style="margin-top:18px;">最近日志（实时）</h3>
+        <pre id="log_pre" class="log-box">{{ log_text }}</pre>
+          </div>
+        </div> <!-- .layout -->
+
+      </div> <!-- .container -->
+
+      <script>
+        // 使用 Server-Sent Events (SSE) 实时接收日志更新
+        if (!!window.EventSource) {
+          const es = new EventSource('/stream_log');
+          es.onmessage = function(e) {
+            // e.data 中换行被转义为 \n，我们需要把它恢复成换行符
+            const txt = e.data.replace(/\\n/g, '\n');
+            const pre = document.getElementById('log_pre');
+            pre.textContent = txt;
+            pre.scrollTop = pre.scrollHeight; // 自动滚动到底部
+          };
+          es.onerror = function() {
+            // 如果发生错误，关闭连接（浏览器会自动重试）
+            console.warn('SSE 连接出错，稍后重试');
+          };
+        } else {
+          // 不支持 SSE 的浏览器可以手动刷新页面
+          console.warn('浏览器不支持 Server-Sent Events (SSE)，请刷新页面查看日志更新');
+        }
+      </script>
+
+    </body>
+  </html>
